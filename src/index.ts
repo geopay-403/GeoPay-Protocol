@@ -272,5 +272,15 @@ export {
   type ReportingConfig,
 } from "./reporting/index.js";
 
+// Payment Links
+export {
+  PaymentLinksManager,
+  createPaymentLinksManager,
+  type PaymentLinkStatus,
+  type PaymentLinkConfig,
+  type CreatePaymentLinkOptions,
+  type PaymentLink,
+} from "./payment-links/index.js";
+
 // Version
 export const VERSION = "2.0.0";
