@@ -2,7 +2,6 @@
 
 > Smart payment routing agent for multi-region PSP optimization via Layer-403
 
-[![npm version](https://badge.fury.io/js/geopay-switch.svg)](https://www.npmjs.com/package/geopay-switch)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
@@ -397,6 +396,275 @@ const client = new GeoPaySwitch({
 ### Is my card data safe?
 
 Yes. GeoPaySwitch never handles raw card numbers. It only works with tokens from your card vault or payment provider.
+
+---
+
+## 🆕 New in v2.0.0
+
+### Analytics & Metrics
+
+Track payment performance, success rates, and regional statistics:
+
+```typescript
+import { createAnalytics } from "geopay-switch";
+
+const analytics = createAnalytics({
+  maxMetrics: 10000,
+  onPersist: async (metrics) => {
+    // Save to your database
+  },
+});
+
+// Record payments
+analytics.recordPayment({
+  intentId: "pi_123",
+  region: "eu-west",
+  routerId: "stripe-eu",
+  amount: 1000,
+  currency: "USD",
+  status: "succeeded",
+  latencyMs: 450,
+  timestamp: new Date().toISOString(),
+  attempts: 1,
+});
+
+// Get insights
+const snapshot = analytics.getSnapshot(24 * 60 * 60 * 1000); // Last 24h
+console.log(`Success rate: ${snapshot.overallSuccessRate}%`);
+console.log(`Best regions:`, analytics.getBestRegions(3));
+```
+
+### Fraud Detection
+
+Built-in risk scoring and fraud prevention:
+
+```typescript
+import { createFraudDetector } from "geopay-switch";
+
+const detector = createFraudDetector({
+  thresholds: { review: 50, block: 80 },
+  onHighRisk: (assessment, ctx) => {
+    // Alert your team
+  },
+});
+
+const assessment = await detector.assess({
+  intent: paymentIntent,
+  ip: "1.2.3.4",
+  email: "customer@example.com",
+  isNewCustomer: true,
+  previousChargebacks: 0,
+});
+
+if (assessment.action === "block") {
+  throw new Error("Transaction blocked");
+}
+```
+
+### Subscriptions & Recurring Payments
+
+Full subscription lifecycle management:
+
+```typescript
+import { createSubscriptionManager } from "geopay-switch";
+
+const subscriptions = createSubscriptionManager(client, {
+  maxRetryAttempts: 4,
+  gracePeriodDays: 14,
+});
+
+// Register plans
+subscriptions.registerPlan({
+  id: "pro_monthly",
+  name: "Pro Plan",
+  amount: 2999,
+  currency: "USD",
+  interval: "monthly",
+  trialDays: 14,
+});
+
+// Create subscription
+const sub = await subscriptions.create("customer_123", "pro_monthly");
+
+// Manage lifecycle
+await subscriptions.pause(sub.id);
+await subscriptions.resume(sub.id);
+await subscriptions.changePlan(sub.id, "enterprise_monthly");
+await subscriptions.cancel(sub.id, { reason: "Customer request" });
+```
+
+### Batch Processing
+
+Process multiple payments efficiently:
+
+```typescript
+import { createBatch } from "geopay-switch";
+
+const batch = createBatch()
+  .addPayment(intent1)
+  .addPayment(intent2, { priority: 1 })
+  .addPayment(intent3, { forceRegion: "eu-west" })
+  .concurrency(5)
+  .retries(2)
+  .onProgress((done, total) => console.log(`${done}/${total}`));
+
+const result = await batch.execute(client);
+console.log(`${result.succeeded}/${result.totalItems} succeeded`);
+```
+
+### Circuit Breaker
+
+Prevent cascading failures:
+
+```typescript
+import { createCircuitBreaker } from "geopay-switch";
+
+const breaker = createCircuitBreaker({
+  failureThreshold: 5,
+  resetTimeoutMs: 30000,
+  onOpen: () => console.log("Circuit opened!"),
+});
+
+const result = await breaker.execute(async () => {
+  return client.pay(intent);
+});
+```
+
+### Rate Limiting
+
+Protect against excessive API calls:
+
+```typescript
+import { createRateLimiter, RateLimitPresets } from "geopay-switch";
+
+const limiter = createRateLimiter(RateLimitPresets.standard());
+
+const check = limiter.consume({ identifier: req.ip });
+if (!check.allowed) {
+  throw new Error(`Rate limited. Retry after ${check.retryAfterMs}ms`);
+}
+```
+
+### Health Checks
+
+Monitor system health:
+
+```typescript
+import { createHealthMonitor, BuiltInChecks } from "geopay-switch";
+
+const monitor = createHealthMonitor({ version: "2.0.0" });
+
+monitor.register(BuiltInChecks.http("layer403", "https://api.layer403.com/health"));
+monitor.register(BuiltInChecks.memory(90));
+
+const health = await monitor.getHealth();
+// { status: "healthy", checks: [...] }
+```
+
+### Event System
+
+Subscribe to payment lifecycle events:
+
+```typescript
+import { createEventEmitter } from "geopay-switch";
+
+const events = createEventEmitter();
+
+events.on("payment:succeeded", (event) => {
+  console.log(`Payment ${event.data.intentId} succeeded!`);
+});
+
+events.on("payment:failed", (event) => {
+  // Handle failure
+});
+```
+
+### Validators
+
+Comprehensive input validation:
+
+```typescript
+import { createPaymentIntentValidator, CardValidators } from "geopay-switch";
+
+const validator = createPaymentIntentValidator();
+const result = validator.validate(paymentIntent);
+
+if (!result.valid) {
+  console.log(result.errors);
+}
+
+// Card validation
+const isValid = CardValidators.luhn("4242424242424242");
+const brand = CardValidators.getBrand("4242424242424242"); // "visa"
+```
+
+### Webhooks Management
+
+Advanced webhook handling with retries:
+
+```typescript
+import { createWebhookManager } from "geopay-switch";
+
+const webhooks = createWebhookManager({
+  maxRetries: 5,
+  onDeliveryFailure: (delivery) => {
+    console.log(`Webhook failed: ${delivery.id}`);
+  },
+});
+
+webhooks.registerEndpoint({
+  url: "https://your-server.com/webhooks",
+  secret: "whsec_...",
+  events: ["payment.succeeded", "payment.failed"],
+  active: true,
+});
+
+await webhooks.send(webhookPayload);
+```
+
+### Idempotency
+
+Prevent duplicate payments:
+
+```typescript
+import { createIdempotencyManager } from "geopay-switch";
+
+const idempotency = createIdempotencyManager({
+  ttlMs: 24 * 60 * 60 * 1000,
+});
+
+const result = await idempotency.execute(
+  "idempotency_key_123",
+  paymentIntent,
+  async () => client.pay(paymentIntent)
+);
+```
+
+### Reporting & Reconciliation
+
+Generate reports and reconcile payments:
+
+```typescript
+import { createReportingManager } from "geopay-switch";
+
+const reporting = createReportingManager();
+
+// Record payments
+reporting.recordPayment(result, intent);
+
+// Generate reports
+const dailyReport = reporting.generateDailyReport("2024-01-15");
+console.log(`Volume: $${dailyReport.volume.USD}`);
+
+// Reconcile with external data
+const reconciliation = reporting.reconcile("2024-01-15", externalRecords);
+console.log(`Match rate: ${reconciliation.matchRate}%`);
+
+// Export to CSV
+const csv = reporting.exportToCSV("2024-01-01", "2024-01-31");
+```
+
+---
 
 ## License
 

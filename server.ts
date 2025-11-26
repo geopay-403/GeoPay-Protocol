@@ -17,6 +17,7 @@ import {
   validatePaymentIntent,
 } from "geopay-switch";
 
+// Расширяем Request для типизации
 declare global {
   namespace Express {
     interface Request {

@@ -1,7 +1,7 @@
 {
   "name": "geopay-switch",
-  "version": "1.0.0",
-  "description": "Smart payment routing agent for multi-region PSP optimization via Layer-403",
+  "version": "2.0.0",
+  "description": "Smart payment routing agent for multi-region PSP optimization via Layer-403 with analytics, fraud detection, subscriptions, and more",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/types/index.d.ts",
@@ -10,6 +10,26 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js",
       "types": "./dist/types/index.d.ts"
+    },
+    "./analytics": {
+      "import": "./dist/esm/analytics/index.js",
+      "require": "./dist/cjs/analytics/index.js"
+    },
+    "./fraud": {
+      "import": "./dist/esm/fraud/index.js",
+      "require": "./dist/cjs/fraud/index.js"
+    },
+    "./subscriptions": {
+      "import": "./dist/esm/subscriptions/index.js",
+      "require": "./dist/cjs/subscriptions/index.js"
+    },
+    "./batch": {
+      "import": "./dist/esm/batch/index.js",
+      "require": "./dist/cjs/batch/index.js"
+    },
+    "./validators": {
+      "import": "./dist/esm/validators/index.js",
+      "require": "./dist/cjs/validators/index.js"
     }
   },
   "files": [
@@ -28,7 +48,10 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "docs": "typedoc --out docs src/index.ts"
+    "docs": "typedoc --out docs src/index.ts",
+    "example:analytics": "npx ts-node examples/analytics-demo.ts",
+    "example:subscriptions": "npx ts-node examples/subscriptions-demo.ts",
+    "example:fraud": "npx ts-node examples/fraud-detection-demo.ts"
   },
   "keywords": [
     "payments",
@@ -39,7 +62,15 @@
     "payment-gateway",
     "multi-region",
     "acquirer",
-    "payment-optimization"
+    "payment-optimization",
+    "fraud-detection",
+    "subscriptions",
+    "recurring-payments",
+    "payment-analytics",
+    "circuit-breaker",
+    "rate-limiting",
+    "webhooks",
+    "idempotency"
   ],
   "author": "Your Name <you@example.com>",
   "license": "MIT",
@@ -60,7 +91,8 @@
     "typescript": "^5.3.0",
     "vitest": "^1.0.0",
     "@vitest/coverage-v8": "^1.0.0",
-    "typedoc": "^0.25.0"
+    "typedoc": "^0.25.0",
+    "ts-node": "^10.9.0"
   },
   "peerDependencies": {
     "express": "^4.18.0"
